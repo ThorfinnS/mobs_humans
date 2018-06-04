@@ -1,0 +1,19 @@
+mobs_humans_female_01.png
+"Emma"
+by nelly
+CC BY-SA 3.0
+
+mobs_humans_female_02.png
+"Female"
+by TenPlus1
+CC BY-SA 3.0
+
+mobs_humans_male_01.png
+"Red-brown-shirt-dude"
+by Krock
+CC BY-SA 4.0
+
+mobs_humans_male_02.png
+"Normalo"
+by Krock
+CC BY-SA 3.0
