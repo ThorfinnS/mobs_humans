@@ -2,7 +2,7 @@
 ![Mobs Humans' screenshot](screenshot.png)<br>
 **_Adds human mobs._**
 
-**Version:** 0.1.1<br>
+**Version:** 0.2.0-dev<br>
 **Source code's license:** GPL v3.0<br>
 **Textures' license:** CC BY-SA v3.0 / v4.0
 
