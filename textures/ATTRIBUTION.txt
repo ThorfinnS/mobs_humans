@@ -18,6 +18,11 @@ mobs_humans_male_02.png
 by Krock
 CC BY-SA 3.0
 
+mobs_human_bones.png
+mobs_human_bones_inv.png
+from Bones Model by Christian9
+CC0
+
 mobs_humans_icon.png
 obtained from character.png from Minetest Game
 Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)

@@ -1,0 +1,3 @@
+mobs_humans_bones_model.obj
+from Bones Model by Christian9
+CC0

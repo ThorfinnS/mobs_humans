@@ -31,6 +31,43 @@ local mod_load_message = "[Mod] Mobs Humans [v0.2.0-dev] loaded."
 
 
 --
+-- Custom bones node
+--
+
+minetest.register_node("mobs_humans:human_bones", {
+	name = "Human Bones",
+	drawtype = "mesh",
+	mesh = "mobs_humans_bones_model.obj",
+	tiles = {"mobs_humans_bones.png"},
+	inventory_image = "mobs_humans_bones_inv.png",
+	wield_image = "mobs_humans_bones_inv.png",
+	selection_box =  {
+		type = "fixed",
+			fixed = {
+				{-0.5, -0.5, -0.5, 0.5, 0.0, 0.5}
+			},
+	},
+	walkable = false,
+	pointable = true,
+	diggable = true,
+	buildable_to = true,
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = {dig_immediate = 2},
+	sounds = default.node_sound_gravel_defaults(),
+
+	on_construct = function(pos)
+		minetest.get_node_timer(pos):start(math.random(60, 300))
+	end,
+
+	on_timer = function(pos, elapsed)
+		minetest.get_node_timer(pos):stop()
+		minetest.swap_node(pos, {name = "air"})
+	end
+})
+
+
+--
 -- Chat messages
 --
 
@@ -481,12 +518,6 @@ mobs:register_mob("mobs_humans:human", {
 		die_end = 166,
 		die_speed = 0.8
 	},
-	replace_what = {
-		"bones:bones"
-	},
-	replace_with = "air",
-	replace_rate = nil,
-	replace_offset = -2,
 
 	on_spawn = function(self, pos)
 
@@ -502,7 +533,6 @@ mobs:register_mob("mobs_humans:human", {
 		self.lava_damage = dps(self, "lava")
 		self.floats = boolean()
 		self.makes_footstep_sound = boolean()
-		self.replace_rate = math.random(1, 10)
 
 		-- Random values chosen for specific human types
 		if (self.type == "animal") then
@@ -532,8 +562,7 @@ mobs:register_mob("mobs_humans:human", {
 			water_damage = self.water_damage,
 			lava_damage = self.lava_damage,
 			floats = self.floats,
-			makes_footstep_sound = self.makes_footstep_sound,
-			replace_rate = self.replace_rate
+			makes_footstep_sound = self.makes_footstep_sound
 		})
 
 		self.object:set_armor_groups({
@@ -583,7 +612,10 @@ mobs:register_mob("mobs_humans:human", {
 			local player_name = clicker:get_player_name()
 
 			local msg = MESSAGE_1 .. player_name .. MESSAGE_2
-				.. self.given_name .. ".\n"
+				.. self.given_name .. ".\n" ..
+				"Type: " .. self.type ..
+				"\nArmor: " .. self.armor ..
+				"\nDamage: " .. self.damage
 			minetest.chat_send_player(player_name, msg)
 		end
 	end,
@@ -597,7 +629,7 @@ mobs:register_mob("mobs_humans:human", {
 			local node_name = minetest.get_node(pos).name
 
 			if (node_name == "air") then
-				minetest.set_node(pos, {name="bones:bones"})
+				minetest.set_node(pos, {name="mobs_humans:human_bones"})
 			end
 		end
 	end
