@@ -31,33 +31,83 @@ local mod_load_message = "[Mod] Mobs Humans [v0.2.0-dev] loaded."
 
 
 --
+-- Chat messages
+--
+
+local MESSAGE_1 = "Saluton "
+local MESSAGE_2 = ", mia nomo estas "
+
+
+--
 -- Functions
 --
 
-local function random_type()
-	local type = "npc"
-	local number = math.random(1, 20)
+local function boolean()
+	if (math.random(0, 1) == 0) then
+		return false
+	else
+		return true
+	end
+end
 
-	if (number <= 10) then
-		type = "monster"
 
-	elseif (number >= 16) then
-		type = "animal"
+local function dps(self, element)
+	local damage_speed = nil
+	local hit_points = nil
+	local time_speed = nil
+	local in_game_day_length = nil
+	local five_in_game_minutes = nil
+	local damage_per_second = nil
+
+	hit_points = self.health
+	time_speed = tonumber(minetest.settings:get("time_speed"))
+
+	if (time_speed == nil) then
+		time_speed = 72
+
+	elseif (time_speed == 0) then
+		time_speed = 1
 	end
 
-	return type
+	if (element == "water") then
+		damage_speed = 300
+
+	elseif (element == "lava") then
+		damage_speed = 100
+	end
+
+	in_game_day_length = 86400 / time_speed
+	five_in_game_minutes = (in_game_day_length * damage_speed) / 86400
+	damage_per_second = hit_points / five_in_game_minutes
+
+	return damage_per_second
 end
 
 
-local function random_damage()
-	 local damage = (math.random(1, 8) * mob_difficulty)
-	 return damage
-end
+local function experience(self)
+	if (self.attack == nil) and (self.engaged ~= true) then
+		return
 
+	elseif (self.attack ~= nil) and (self.engaged ~= true) then
+		self.engaged = true
 
-local function random_armour()
-	 local armour = math.random(10, 100)
-	 return armour
+		self.object:set_properties({engaged = self.engaged})
+
+	elseif (self.attack == nil) and (self.engaged == true) then
+		self.engaged = false
+
+		self.object:set_properties({engaged = self.engaged})
+
+		if (self.damage < (8 * mob_difficulty)) then
+			self.damage = self.damage + 1
+			self.object:set_properties({damage = self.damage})
+		end
+
+		if (self.armor > 10) then
+			self.armor = self.armor - 1
+			self.object:set_properties({armor = self.armor})
+		end
+	end
 end
 
 
@@ -99,82 +149,6 @@ local function heal_over_time(self, dtime)
 				})
 
 			end
-		end
-	end
-end
-
-
-local function combat_tag(self)
-	if (self.attack)
-	and (self.combat_nametag ~= true)
-	then
-		self.combat_nametag = true
-
-		if self.attack:is_player() then
-			self.foe = self.attack:get_player_name()
-
-		else
-			self.foe = self.attack:get_luaentity().given_name
-
-			if (self.foe == nil) then
-				self.foe = self.attack:get_luaentity().name
-			end
-		end
-
-		if (self.given_name == nil) then
-			self.given_name = random_string(math.random(2, 5))
-
-			self.object:set_properties({given_name = self.given_name})
-		end
-
-		self.nametag = self.given_name .. " (" .. self.type .. ")\n" ..
-			"Armor: " .. self.armor .. " - " ..
-			"Damage: " .. self.damage ..
-			"\nVs " .. self.foe
-
-		self.object:set_properties({
-			nametag = self.nametag,
-			combat_nametag = self.combat_nametag
-		})
-
-	elseif (self.attack == nil)
-	and (self.combat_nametag ~= false)
-	then
-		self.combat_nametag = false
-		self.nametag = self.given_name .. "\n" ..
- 			"(" .. self.type .. ")"
-
-		self.object:set_properties({
-			nametag = self.nametag,
-			combat_nametag = self.combat_nametag
-		})
-
-	end
-end
-
-
-local function experience(self)
-	if (self.attack == nil) and (self.engaged ~= true) then
-		return
-
-	elseif (self.attack ~= nil) and (self.engaged ~= true) then
-		self.engaged = true
-
-		self.object:set_properties({engaged = self.engaged})
-
-	elseif (self.attack == nil) and (self.engaged == true) then
-		self.engaged = false
-
-		self.object:set_properties({engaged = self.engaged})
-
-		if (self.damage < (8 * mob_difficulty)) then
-			self.damage = self.damage + 1
-			self.object:set_properties({damage = self.damage})
-		end
-
-		if (self.armor > 10) then
-			self.armor = self.armor - 1
-			self.object:set_properties({armor = self.armor})
 		end
 	end
 end
@@ -426,48 +400,63 @@ local function random_string(length)
 end
 
 
+local function random_type()
+	local type = "npc"
+	local number = math.random(1, 20)
+
+	if (number <= 10) then
+		type = "monster"
+
+	elseif (number >= 16) then
+		type = "animal"
+	end
+
+	return type
+end
+
+
 --
 -- Entity definition
 --
 
 mobs:register_mob("mobs_humans:human", {
-	nametag = "",
-	given_name = "",
-	type = "",
-	hp_min = 16,
+	given_name = nil,
+	type = nil,
+	hp_min = 15,
 	hp_max = 20,
-	armor = 100,
-	passive = false,
+	initial_hp = nil,
+	armor = nil,
+	passive = nil,
 	walk_velocity = 4,
 	run_velocity = 4,
-	walk_chance = 1,
+	walk_chance = nil,
 	jump = false,
-	runaway = false,
-	view_range = 15,
-	damage = 1,
-	water_damage = 2,
-	lava_damage = 8,
+	runaway = nil,
+	view_range = nil,
+	damage = nil,
+	fall_damage = true,
+	water_damage = nil,
+	lava_damage = nil,
 	suffocation = true,
-	floats = 1,
+	floats = nil,
 	reach = 4,
-	attacks_monsters = true,
-	attack_animals = true,
-	group_attack = true,
+	docile_by_day = nil,
+	attacks_monsters = nil,
+	attack_animals = nil,
+	group_attack = nil,
 	attack_type = "dogfight",
-	specific_attack = {"player", "mobs_humans:human"},
 	runaway_from = {
-		"mobs_ghost_redo:ghost",
 		"mobs_banshee:banshee",
+		"mobs_ghost_redo:ghost",
 		"mobs_others:snow_walker"
 	},
-	makes_footstep_sound = true,
+	makes_footstep_sound = nil,
 	sounds = {
 		attack = "default_punch"
 	},
 	visual = "mesh",
 	visual_size = {x = 1, y = 1},
 	collisionbox = {-0.4, -1, -0.4, 0.4, 0.75, 0.4},
-	selectionbox = {-0.4, -1, -0.4, 0.4, 0.75, 0.4},
 	textures = {
 		{"mobs_humans_female_01.png"},
 		{"mobs_humans_female_02.png"},
@@ -496,80 +485,119 @@ mobs:register_mob("mobs_humans:human", {
 		"bones:bones"
 	},
 	replace_with = "air",
-	replace_rate = 4,
+	replace_rate = nil,
 	replace_offset = -2,
 
-	-- Choose and set random appearence and stats:
-	-- * type (animal, monster, npc)
-	-- * walk chance (10 - 33; 10: unlikely, 33: probable)
-	-- * armor (100 - 10; 100: normal, 10: strongest)
-	-- * damage (1 - 8; 1: bare hands, 8: diamond sword)
 	on_spawn = function(self, pos)
-		self.armor = random_armour()
+
+		-- Random values chosen for any human type
+		self.given_name = random_string(math.random(2, 5))
+		self.type = random_type()
+		self.initial_hp = self.health
+		self.armor = math.random(10, 100)
+		self.walk_chance = math.random(10, 33)
+		self.view_range = math.random(7, 15)
+		self.damage = (math.random(1, 8) * mob_difficulty)
+		self.water_damage = dps(self, "water")
+		self.lava_damage = dps(self, "lava")
+		self.floats = boolean()
+		self.makes_footstep_sound = boolean()
+		self.replace_rate = math.random(1, 10)
+
+		-- Random values chosen for specific human types
+		if (self.type == "animal") then
+			self.passive = boolean()
+			self.runaway = boolean()
+
+		elseif (self.type == "npc") then
+			self.passive = boolean()
+			self.attacks_monsters = boolean()
+			self.group_attack = boolean()
+
+		elseif (self.type == "monster") then
+			self.docile_by_day = boolean()
+			self.attack_animals = boolean()
+			self.group_attack = boolean()
+
+		end
+
+		-- Values applied to any human type
+		self.object:set_properties({
+			given_name = self.given_name,
+			type = self.type,
+			initial_hp = self.initial_hp,
+			walk_chance = self.walk_chance,
+			view_range = self.view_range,
+			damage = self.damage,
+			water_damage = self.water_damage,
+			lava_damage = self.lava_damage,
+			floats = self.floats,
+			makes_footstep_sound = self.makes_footstep_sound,
+			replace_rate = self.replace_rate
+		})
+
 		self.object:set_armor_groups({
 			immortal = 1,
 			fleshy = self.armor
 		})
 
-		self.type = random_type()
-		self.given_name = random_string(math.random(2, 5))
-		self.damage = random_damage()
-		self.walk_chance = math.random(10, 33)
+		-- Values applied to specific human types
 		if (self.type == "animal") then
-			self.passive = true
-			self.runaway = true
-			self.replace_what = {
-				"mobs:cobweb",
-				"fort_spikes:broken_wood_spikes",
-				"fort_spikes:broken_iron_spikes",
-				"group:flora"
-			}
-			self.replace_rate = 10
-			self.replace_offset = -1
+			self.object:set_properties({
+				passive = self.passive,
+				runaway = self.runaway
+			})
+
+		elseif (self.type == "npc") then
+			self.object:set_properties({
+				passive = self.passive,
+				attacks_monsters = self.attacks_monsters,
+				group_attack = self.group_attack
+			})
+
+		elseif (self.type == "monster") then
+			self.object:set_properties({
+				docile_by_day = self.docile_by_day,
+				attack_animals = self.attack_animals,
+				group_attack = self.group_attack
+			})
+
 		end
-
-		self.initial_hp = self.health
-		-- used as reference when recovering health
-
-		self.nametag = self.given_name .. "\n(" .. self.type .. ")"
-
-		self.object:set_properties({
-			type = self.type,
-			name = self.given_name,
-			nametag = self.nametag,
-			heal_counter = 4.0,
-			damage = self.damage,
-			walk_chance = self.walk_chance,
-			passive = self.passive,
-			runaway = self.runaway,
-			initial_hp = self.initial_hp,
-			replace_what = self.replace_what,
-			replace_offset = self.replace_offset,
-			replace_rate = self.raplace_rate
-		})
 		return true
 	end,
 
-	-- Health recover
+	-- Health recover and experience gain
 	do_custom = function(self, dtime)
 		heal_over_time(self, dtime)
 
 		if (self.type ~= "animal") then
-			combat_tag(self)
 			experience(self)
+		end
+	end,
+
+	on_rightclick = function(self, clicker)
+		if (self.health > 0)
+		and (self.state ~= "attack")
+		and (self.state ~= "runaway")
+		then
+			local player_name = clicker:get_player_name()
+
+			local msg = MESSAGE_1 .. player_name .. MESSAGE_2
+				.. self.given_name .. ".\n"
+			minetest.chat_send_player(player_name, msg)
 		end
 	end,
 
 	-- Bones' random spawner
 	on_die = function(self, pos)
-		local drop_bones = math.random(0, 9)
+		local drop_bones = math.random(1, 12)
 
-		if (drop_bones >= 5) then
+		if (drop_bones <= 4) then
 			local pos = {x = pos.x, y = (pos.y -1), z = pos.z}
 			local node_name = minetest.get_node(pos).name
+
 			if (node_name == "air") then
 				minetest.set_node(pos, {name="bones:bones"})
-				minetest.check_single_for_falling(pos)
 			end
 		end
 	end
@@ -593,6 +621,10 @@ mobs:spawn({
 	max_height = 240,
 	day_toggle = nil
 })
+
+-- Spawn Egg
+
+mobs:register_egg("mobs_humans:human", "Spawn Human", "mobs_humans_icon.png")
 
 
 --
