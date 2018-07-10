@@ -1,6 +1,6 @@
 ### Mobs Humans
 ![Mobs Humans' screenshot](screenshot.png)<br>
-**_Adds human mobs._**
+**_Adds humans._**
 
 **Version:** 0.2.0-dev<br>
 **Source code's license:** GPL v3.0<br>

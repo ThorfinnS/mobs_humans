@@ -1,1 +1,1 @@
-Adds human mobs.
+Adds humans.

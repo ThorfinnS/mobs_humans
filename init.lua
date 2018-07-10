@@ -35,7 +35,7 @@ local mod_load_message = "[Mod] Mobs Humans [v0.2.0-dev] loaded."
 --
 
 minetest.register_node("mobs_humans:human_bones", {
-	name = "Human Bones",
+	description = "Human Bones",
 	drawtype = "mesh",
 	mesh = "mobs_humans_bones_model.obj",
 	tiles = {"mobs_humans_bones.png"},
@@ -53,10 +53,11 @@ minetest.register_node("mobs_humans:human_bones", {
 	buildable_to = true,
 	paramtype = "light",
 	paramtype2 = "facedir",
-	groups = {dig_immediate = 2},
+	groups = {dig_immediate = 2, falling_node = 1},
 	sounds = default.node_sound_gravel_defaults(),
 
 	on_construct = function(pos)
+		minetest.check_single_for_falling(pos)
 		minetest.get_node_timer(pos):start(math.random(60, 300))
 	end,
 
@@ -149,42 +150,62 @@ end
 
 
 local function heal_over_time(self, dtime)
-	if (self.state ~= "attack") and (self.state ~= "runaway") then
-		-- For backward compatibility
-		if (self.heal_counter == nil) or (self.initial_hp == nil) then
-			self.heal_counter = 4.0
-			-- used for health recovery
+	-- For backward compatibility
+	if (self.heal_counter == nil)
+	or (self.initial_hp == nil)
+	or (self.injuried == nil)
+	then
+		self.heal_counter = 4.0
+		-- used for health recovery
 
-			self.initial_hp = math.random(self.hp_min, self.hp_max)
-			-- used as reference when recovering health
+		self.initial_hp = math.random(self.hp_min, self.hp_max)
+		-- used as reference when recovering health
 
-			self.object:set_properties({
-				heal_counter = self.heal_counter,
-				initial_hp = self.initial_hp
-			})
+		-- used to determine whether if in need of healing
+		if (self.health == self.initial_hp) then
+			self.injuried = false
+
+		else
+			self.injuried = true
+
 		end
 
-		-- recover 1HP every 4 seconds
-		if (self.health < self.initial_hp)
-		and (self.state ~= "attack")
-		and (self.state ~= "runaway")
-		then
-			if (self.heal_counter > 0) then
-				self.heal_counter = self.heal_counter - dtime
+		self.object:set_properties({
+			heal_counter = self.heal_counter,
+			initial_hp = self.initial_hp,
+			injuried = self.injuried
+		})
+	end
 
-				self.object:set_properties({
-					heal_counter = self.heal_counter
-				})
+	if (self.injuried == true) then
+		if (self.state ~= "attack") and (self.state ~= "runaway") then
+			-- recover 1HP every 4 seconds
+			if (self.health < self.initial_hp)
+			and (self.state ~= "attack")
+			and (self.state ~= "runaway")
+			then
+				if (self.heal_counter > 0) then
+					self.heal_counter = self.heal_counter - dtime
 
-			else
-				self.heal_counter = 4.0
-				self.health = self.health + 1
-				self.object:set_hp(self.health)
+					self.object:set_properties({
+						heal_counter = self.heal_counter
+					})
 
-				self.object:set_properties({
-					heal_counter = self.heal_counter
-				})
+				else
+					self.heal_counter = 4.0
+					self.health = self.health + 1
+					self.object:set_hp(self.health)
 
+					self.object:set_properties({
+						heal_counter = self.heal_counter
+					})
+
+				end
+
+			elseif (self.health == self.initial_hp) then
+				self.injuried = false
+
+				self.object:set_properties({injuried = self.injuried})
 			end
 		end
 	end
@@ -457,6 +478,7 @@ end
 --
 
 mobs:register_mob("mobs_humans:human", {
+	--nametag = "Human",
 	given_name = nil,
 	type = nil,
 	hp_min = 15,
@@ -524,7 +546,9 @@ mobs:register_mob("mobs_humans:human", {
 		-- Random values chosen for any human type
 		self.given_name = random_string(math.random(2, 5))
 		self.type = random_type()
-		self.initial_hp = self.health
+		self.initial_hp = math.random(self.hp_min, self.hp_max)
+		self.heal_counter = 4.0
+		self.injuried = false
 		self.armor = math.random(10, 100)
 		self.walk_chance = math.random(10, 33)
 		self.view_range = math.random(7, 15)
@@ -555,20 +579,24 @@ mobs:register_mob("mobs_humans:human", {
 		self.object:set_properties({
 			given_name = self.given_name,
 			type = self.type,
+			heal_counter = self.heal_counter,
 			initial_hp = self.initial_hp,
+			injuried = self.injuried,
 			walk_chance = self.walk_chance,
 			view_range = self.view_range,
 			damage = self.damage,
 			water_damage = self.water_damage,
 			lava_damage = self.lava_damage,
 			floats = self.floats,
-			makes_footstep_sound = self.makes_footstep_sound
+			makes_footstep_sound = self.makes_footstep_sound,
 		})
 
 		self.object:set_armor_groups({
 			immortal = 1,
 			fleshy = self.armor
 		})
+
+		self.object:set_hp(self.initial_hp)
 
 		-- Values applied to specific human types
 		if (self.type == "animal") then
@@ -595,6 +623,14 @@ mobs:register_mob("mobs_humans:human", {
 		return true
 	end,
 
+	do_punch = function(self)
+		if (self.health < self.initial_hp) and (self.injuried == false) then
+			self.injuried = true
+
+			self.object:set_properties({injuried = self.injuried})
+		end
+	end,
+
 	-- Health recover and experience gain
 	do_custom = function(self, dtime)
 		heal_over_time(self, dtime)
@@ -614,7 +650,7 @@ mobs:register_mob("mobs_humans:human", {
 			local msg = MESSAGE_1 .. player_name .. MESSAGE_2
 				.. self.given_name .. ".\n" ..
 				"Type: " .. self.type ..
-				"\nArmor: " .. self.armor ..
+				"\nArmor: " .. (100 - self.armor) ..
 				"\nDamage: " .. self.damage
 			minetest.chat_send_player(player_name, msg)
 		end
@@ -624,7 +660,7 @@ mobs:register_mob("mobs_humans:human", {
 	on_die = function(self, pos)
 		local drop_bones = math.random(1, 12)
 
-		if (drop_bones <= 4) then
+		if (drop_bones <= 6) then
 			local pos = {x = pos.x, y = (pos.y -1), z = pos.z}
 			local node_name = minetest.get_node(pos).name
 
@@ -647,7 +683,7 @@ mobs:spawn({
 	max_light = 15,
 	min_light = 0,
 	interval = 60,
-	chance = 3500,
+	chance = 37500,
 	active_object_count = 2,
 	min_height = 1,
 	max_height = 240,
