@@ -27,7 +27,7 @@ if (mob_difficulty == nil) then
 	 mob_difficulty = 1
 end
 
-local mod_load_message = "[Mod] Mobs Humans [v0.2.0-dev] loaded."
+local mod_load_message = "[Mod] Mobs Humans [v0.2.0] loaded."
 
 
 --
@@ -58,7 +58,7 @@ minetest.register_node("mobs_humans:human_bones", {
 
 	on_construct = function(pos)
 		minetest.check_single_for_falling(pos)
-		minetest.get_node_timer(pos):start(math.random(60, 300))
+		minetest.get_node_timer(pos):start(math.random(300, 600))
 	end,
 
 	on_timer = function(pos, elapsed)
@@ -86,6 +86,25 @@ local function boolean()
 	else
 		return true
 	end
+end
+
+
+local function attack_type()
+	local number = math.random(1, 3)
+	local attack_name = nil
+
+	if (number == 1) then
+		attack_name = "dogfight"
+
+	elseif (number == 2) then
+		attack_name = "shoot"
+
+	else
+		attack_name = "dogshoot"
+
+	end
+
+	return attack_name
 end
 
 
@@ -504,6 +523,9 @@ mobs:register_mob("mobs_humans:human", {
 	attack_animals = nil,
 	group_attack = nil,
 	attack_type = "dogfight",
+	arrow = "mobs_humans:stone",
+	shoot_interval = 2,
+	shoot_offset = 1.5,
 	runaway_from = {
 		"mobs_banshee:banshee",
 		"mobs_ghost_redo:ghost",
@@ -511,7 +533,8 @@ mobs:register_mob("mobs_humans:human", {
 	},
 	makes_footstep_sound = nil,
 	sounds = {
-		attack = "default_punch"
+		attack = "default_punch",
+		shoot_attack = "mobs_swing"
 	},
 	visual = "mesh",
 	visual_size = {x = 1, y = 1},
@@ -567,11 +590,13 @@ mobs:register_mob("mobs_humans:human", {
 			self.passive = boolean()
 			self.attacks_monsters = boolean()
 			self.group_attack = boolean()
+			self.attack_type = attack_type()
 
 		elseif (self.type == "monster") then
 			self.docile_by_day = boolean()
 			self.attack_animals = boolean()
 			self.group_attack = boolean()
+			self.attack_type = attack_type()
 
 		end
 
@@ -609,14 +634,16 @@ mobs:register_mob("mobs_humans:human", {
 			self.object:set_properties({
 				passive = self.passive,
 				attacks_monsters = self.attacks_monsters,
-				group_attack = self.group_attack
+				group_attack = self.group_attack,
+				attack_type = self.attack_type
 			})
 
 		elseif (self.type == "monster") then
 			self.object:set_properties({
 				docile_by_day = self.docile_by_day,
 				attack_animals = self.attack_animals,
-				group_attack = self.group_attack
+				group_attack = self.group_attack,
+				attack_type = self.attack_type
 			})
 
 		end
@@ -648,10 +675,7 @@ mobs:register_mob("mobs_humans:human", {
 			local player_name = clicker:get_player_name()
 
 			local msg = MESSAGE_1 .. player_name .. MESSAGE_2
-				.. self.given_name .. ".\n" ..
-				"Type: " .. self.type ..
-				"\nArmor: " .. (100 - self.armor) ..
-				"\nDamage: " .. self.damage
+				.. self.given_name .. ".\n"
 			minetest.chat_send_player(player_name, msg)
 		end
 	end,
@@ -673,6 +697,27 @@ mobs:register_mob("mobs_humans:human", {
 
 
 --
+-- Arrow entity
+--
+
+mobs:register_arrow("mobs_humans:stone", {
+	visual = "sprite",
+	visual_size = {x = 0.1, y = 0.1},
+	textures = {"default_stone.png"},
+	velocity = 9,
+	hit_player = function(self, player)
+		player:punch(self.object, 1,
+			{
+				full_punch_interval = 0.1,
+				damage_groups = {fleshy = 6},
+			}
+		)
+	end
+})
+
+
+--
+--
 -- Entity spawner
 --
 
@@ -684,7 +729,7 @@ mobs:spawn({
 	min_light = 0,
 	interval = 60,
 	chance = 37500,
-	active_object_count = 2,
+	active_object_count = 1,
 	min_height = 1,
 	max_height = 240,
 	day_toggle = nil

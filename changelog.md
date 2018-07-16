@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-	- Allow to temporary hire an human.
-	- Allow humans to throw rocks.
-	-- Guns and bows would not fit in fantasy/modern themed games, rocks are
-	-- neuter.
+	- Allow to temporarily hire an human.
+
+
+## [0.2.0] - 2018-07-16
+### Added
+
+	- Stone throwing ability.
+
+### Changed
+
+	- Active Objects Count decreased to 1 (was 2)
+	- Humans' bones remove timer increased to (min300, max600)secs (was 60, 300)
 
 
 ## [0.2.0-dev] - 2018-07-10
