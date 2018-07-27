@@ -21,13 +21,10 @@
 -- General variables
 --
 
-local minetest_log_level = minetest.settings:get("debug_log_level")
 local mob_difficulty = tonumber(minetest.settings:get("mob_difficulty"))
 if (mob_difficulty == nil) then
 	 mob_difficulty = 1
 end
-
-local mod_load_message = "[Mod] Mobs Humans [v0.2.0] loaded."
 
 
 --
@@ -712,6 +709,10 @@ mobs:register_arrow("mobs_humans:stone", {
 				damage_groups = {fleshy = 6},
 			}
 		)
+	end,
+
+	hit_node = function(self, pos, node)
+		self.object:remove()
 	end
 })
 
@@ -751,8 +752,11 @@ mobs:alias_mob("mobs:human", "mobs_humans:human")
 -- Minetest engine debug logging
 --
 
-if (minetest_log_level == nil) or (minetest_log_level == "action") or
-	(minetest_log_level == "info") or (minetest_log_level == "verbose") then
+if (minetest.settings:get("debug_log_level") == nil)
+or (minetest.settings:get("debug_log_level") == "action")
+or	(minetest.settings:get("debug_log_level") == "info")
+or (minetest.settings:get("debug_log_level") == "verbose")
+then
 
-	minetest.log("action", mod_load_message)
+	minetest.log("action", "[Mod] Mobs Humans [v0.2.1] loaded.")
 end
