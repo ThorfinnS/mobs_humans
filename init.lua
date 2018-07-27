@@ -196,10 +196,7 @@ local function heal_over_time(self, dtime)
 	if (self.injuried == true) then
 		if (self.state ~= "attack") and (self.state ~= "runaway") then
 			-- recover 1HP every 4 seconds
-			if (self.health < self.initial_hp)
-			and (self.state ~= "attack")
-			and (self.state ~= "runaway")
-			then
+			if (self.health < self.initial_hp) then
 				if (self.heal_counter > 0) then
 					self.heal_counter = self.heal_counter - dtime
 
@@ -757,6 +754,5 @@ or (minetest.settings:get("debug_log_level") == "action")
 or	(minetest.settings:get("debug_log_level") == "info")
 or (minetest.settings:get("debug_log_level") == "verbose")
 then
-
-	minetest.log("action", "[Mod] Mobs Humans [v0.2.1] loaded.")
+	minetest.log("action", "[Mod] Mobs Humans [v0.2.2] loaded.")
 end

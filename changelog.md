@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 	- Allow to temporarily hire an human.
 
 
+## [0.2.2] - 2018-07-27
+### Changed
+
+	- Removed redundant conditional check.
+
+
+
 ## [0.2.1] - 2018-07-27
 ### Changed
 
